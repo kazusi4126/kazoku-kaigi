@@ -2,7 +2,7 @@
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#253b55"><title>かぞく会議</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f7f4ef;color:#253b55;font:16px -apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif}header{background:#253b55;color:#fff;padding:22px 18px}header h1{margin:0 0 6px;font-size:27px}header small{color:#e2e7ef}main{max-width:650px;margin:auto;padding:14px}.card{background:white;border-radius:16px;padding:17px;margin:12px 0;box-shadow:0 2px 8px #1d28300b}h2{font-size:19px;margin:0 0 12px}p{line-height:1.5}label{display:block;font-size:13px;margin:9px 0 4px}input,textarea,select{font:inherit;border:1px solid #cdd3d9;border-radius:9px;padding:11px;width:100%;background:white;color:#253b55}textarea{min-height:72px}button{font:inherit;background:#253b55;color:white;border:0;border-radius:9px;padding:11px 14px;margin:6px 5px 6px 0;cursor:pointer}.secondary{background:#e7edf2;color:#253b55}.danger{background:#f6e6e5;color:#943a39}.item{padding:10px 0;border-bottom:1px solid #eee}.item:last-child{border-bottom:0}.muted{color:#65717e;font-size:13px}.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.row input[type=checkbox]{width:22px;height:22px;flex:none}.flex{flex:1}.status{min-height:22px;color:#266444;font-size:14px}.tabs{display:flex;gap:6px;overflow:auto}.tabs button{white-space:nowrap;background:#e7edf2;color:#253b55}.tabs button.active{background:#253b55;color:white}.hide{display:none}.tag{font-size:12px;background:#f1f3f6;padding:3px 7px;border-radius:8px}small{line-height:1.5}
-</style></head><body><header><h1>かぞく会議</h1><small>いちか・にか・さんか　｜　会議フロー Ver.1.4.1</small></header>
+</style></head><body><header><h1>かぞく会議</h1><small>いちか・にか・さんか　｜　会議フロー Ver.1.5</small></header>
 <main>
 <section class="card" id="meetingFlow">
 <h2>三つ子とかぞく会議</h2>
@@ -11,7 +11,7 @@
 <div><button id="startMeeting">会議をはじめる</button><button id="finishMeeting" class="secondary">会議をおわる</button></div>
 <p id="flowHelp" class="muted">開始すると、前回の記録をChatGPTへ渡す文章をコピーします。</p>
 <textarea id="flowText" readonly style="min-height:110px" aria-label="会議の受け渡し文章"></textarea>
-<div><button id="openChat" class="secondary">ChatGPTを開く</button><button id="goImport" class="secondary">結果をアプリに保存する</button></div>
+<div><button id="shareChat" class="secondary">iPhoneで共有する</button><button id="openChat" class="secondary">ChatGPT Webを開く</button><button id="goImport" class="secondary">結果をアプリに保存する</button></div>
 </section>
 <div class="tabs"><button data-tab="topics" class="active">議題箱</button><button data-tab="decisions">決定事項</button><button data-tab="todos">TODO</button><button data-tab="next">次回会議</button><button data-tab="share">引き継ぎ</button></div>
 <div id="topics" class="card panel"><h2>話したいことを忘れない議題箱</h2><input id="topicText" placeholder="例：次の旅行について"><button id="topicAdd">議題を追加</button><div id="topicList"></div></div>
@@ -59,7 +59,7 @@ function tabTo(id){const b=document.querySelector('[data-tab="'+id+'"]');if(b)b.
 async function copyFlow(t){flowText.value=t;try{await navigator.clipboard.writeText(t);msg("文章をコピーしました");return true}catch(e){msg("自動コピーできませんでした。下の文章を長押ししてコピーしてください");flowText.focus();flowText.select();return false}}
 el("startMeeting").onclick=async()=>{const text=handoff()+"\n会議を開始してください。家族の発言を中心に進め、必要な調査は先回りして行い、質問は一つずつ。保存済みの記録と推測は区別してください。";await copyFlow(text);flowState.textContent="開始用の文章を準備";flowHelp.textContent="ChatGPTを開いて貼り付け、三つ子との会議を始めてください。"};
 el("finishMeeting").onclick=async()=>{await copyFlow(fmt+"\nこれまでの会話で新しく決まった内容だけを対象にしてください。");flowState.textContent="終了用の文章を準備";flowHelp.textContent="ChatGPTの会議に貼り付け、返ってきたJSONをコピーしてください。その後『結果をアプリに保存する』へ。"};
-el("openChat").onclick=()=>{window.open("https://chatgpt.com/","_blank","noopener,noreferrer")};
+el("shareChat").onclick=async()=>{const t=flowText.value.trim()||handoff();flowText.value=t;if(!navigator.share){flowHelp.textContent="このブラウザでは共有機能が使えません。文章をコピーしてChatGPTアプリに貼り付けてください。";await copyFlow(t);return}try{await navigator.share({title:"かぞく会議",text:t});flowHelp.textContent="共有先で文章が渡ったか確認してください。送信・保存はまだ行われていません。";flowState.textContent="共有画面を利用"}catch(e){if(e&&e.name==="AbortError"){flowHelp.textContent="共有をキャンセルしました。従来のコピーも利用できます。";return}flowHelp.textContent="共有できませんでした。コピー方式を使ってください。";await copyFlow(t)}};el("openChat").onclick=()=>{window.open("https://chatgpt.com/","_blank","noopener,noreferrer")};
 el("goImport").onclick=()=>{tabTo("share");el("importJson").focus();flowState.textContent="取り込み待ち"};
 render();msg("議題と記録を読み込みました");
 })();
